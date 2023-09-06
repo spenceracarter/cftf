@@ -1,0 +1,52 @@
+Question 1:
+    1) Try to log into the server, verify that it hasn't crashed. if crashed, restart and verify that it fully comes back up, else continue.
+    2) Check disk space, ensure that the used partition hasn't filled up. Clean up unused artifacts, compress old logs if needed, make sure that the /tmp directory isn't eating using an excessive amount of space.
+    3) Check application service/daemon. If it's down, verify that it's not down for an upgrade (scheduled or not). If not purposefully down, attempt to restart, watch logs and see if it crashes again. If the service is still running, verify that it's not actually a zombie process.
+        a) If there is an upgrade running, verify that the second server hasn't been removed from the ALB (provided it's up and functional)
+    4) If still crashing after restart, scour logs for warning/critical/error messages, take appropriate action as per the messages if needed.
+    5) Verify that configuration files haven't been changed. If there is a configuration management tool (i.e. puppet, chef, etc), try to apply appropirate configuration for the application server, look for changes that may be being made by said tool. 
+        a) Verify that no recent changes to the configuration management tool have been made. if so, and if errors point to the change made, revert the changes (or fail forward to a new, functional version)
+    6) If everything looks good from the server side, verify ALB settings haven't been changed. If possible, run a manual version of the test from a machine in the appropriate zone (locally, if possible, from a bastion host if zone restricted [and if security groups would allow the check to succeed])
+    7) If ALB looks good, verify that no changes to the security groups have happened recently. if yes, revert and test.
+    8) Verify DNS hasn't been messed with.
+    9) Verify that the local server certs are still valid and haven't expired/been revoked. Weep if they have been, then get working on getting new certs asap.
+    10) Verify that the RDS instance is up and running (this may come much earlier, depending on error messages in logs)
+    Final) Reboot servers if nothing else has worked.
+
+    Metrics to be measured: Load on server instances, number of calls being made to the ALB, service/daemon health check on the instances.
+
+    Tools to be implemented: Automated paging of on call if outside of core business hours for the "Web_Application_Alive" healthcheck failure. The specific tool would depend upon what the company is already using, if anything. If nothing is currently extant, then it's time to start looking for one, or setting up AWS SMS to alert upon the failure.
+    
+    Infra changes: HA on the application itself. Why the devil was there only one application server in the alb!? Please, no more single points of failure. Set up a second instance of the application server to act as a failover if you can't get true HA configured.
+
+    Post-mortem template would be as follows
+```
+2023-09-01: Customers unable to access $WEBSITE <YYYY-MM-DD: Incident Title>
+
+Timeline:
+16:35 Pacific/00:35 UTC: Recieved reports from multiple customers that $WEBSITE was unavailable. Additionally, the "Web_Application_Alive" check began to fail.
+HH:MM: Recieved notificiation about failures via <PERSON/TOOL>, began investigating, outage notificiation distro list notified.
+HH:MM: Started troubleshooting, looking into the following possible causes: <Go over troubleshooting done, until issue identified>
+HH:MM: Issue identified as $CAUSE, began working on a fix. OR Unable to identify issue, escalated to $APPROPRIATE_TEAM, and started outage bridge.
+HH:MM: $APPROPRIATE_TEAM responded. $APPROPRIATE_PERSON was the person who joined. 
+(Continue documenting issues discovered, troubleshooting done, and people joining until fix identified)
+HH:MM: Fix identified as $FIX. Deployed the fix.
+
+RCA: Issue was identified as $PROBLEM. This was caused by <The cause of the problem, put into the appropriate technical level for the intended audience. No need to go into super deep detail, unless the rca is being put together for a team that would understand it.>
+
+Lessons learned: Lorem Ipsum
+Action items, with associated tickets: 
+    ISSUE 1: Description, Assigned to $TEAM via $tickets
+    ISSUE 2: ...
+    ...
+    ISSUE N: 
+```
+
+Question 2:
+    I'm not 100% sure of the syntax on this one (yet), as I'm unable to test it empirically, but, from what I've found so far, I would provide a simple powershell script to be included in the customers current configuration management tool with something along the lines of the following:
+    ```
+    Set-GPRegistryValue -key 'HKCU\Software\Policies\Microsoft\<key name i haven't been able to find yet>' -ValueName '<once again, something else I need to find still>' -Type String -Value "<still need to get what this explicitly is>"
+    #for Configure attack surface, the control has been renumbered to 18.10.43.6.1.2
+    #The above command would be repeated for the attack surface control
+    ```
+
