@@ -215,7 +215,7 @@ resource "aws_instance" "bastions" {
 
     user_data = <<EOF
 <powershell>
-net user /add localadmin n5V!48iJhb
+net user /add localadmin REDACTED!
 net localgroup administrators localadmin /add
 Rename-Computer -NewName bastion1 -Force -Restart
 </powershell>
@@ -267,7 +267,7 @@ resource "aws_db_instance" "rdsdb" {
     engine                  = "postgres"
     engine_version          = "11"
     username                = "db_user"
-    password                = "db_password" #once again, were this not for a test, I'd be using aws secrets manager for this, rather than having it straight in the code
+    password                = "[REDACTED!]" #once again, were this not for a test, I'd be using aws secrets manager for this, rather than having it straight in the code
     db_subnet_group_name    = aws_db_subnet_group.dbsggroup.name
     parameter_group_name    = aws_db_parameter_group.dbpg.name
     vpc_security_group_ids  = ["${aws_security_group.dbsg.id}"]
